@@ -17,7 +17,7 @@ def read_files():
         tree = ET.parse(xmlfile)
         yield (tree.find('mainText').text, tree.find('veracity').text)
 
-
+tokenize = lambda doc: doc.lower().split(" ")
 
 documents = [f[0] for f in read_files() if f[0] is not None]
 possibilities = ['mixture of true and false', 'mostly false', 'no factual content', 'mostly true']
