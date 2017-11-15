@@ -18,7 +18,7 @@ def read_files():
         xmlfile = os.path.join(path, filename)
         tree = ET.parse(xmlfile)
         try:
-            l = len(tree.find('mainText').text)
+            l = len(tree.find('mainText').text.split(" "))
         except:
             l = 0
         yield (tree.find('mainText').text, tree.find('veracity').text, len(tree.findall('quotes')), l)
