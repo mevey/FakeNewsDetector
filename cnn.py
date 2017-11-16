@@ -8,16 +8,14 @@ import os
 # fix random seed for reproducibility
 np.random.seed(7)
 
-
-tokenize = lambda doc: doc.lower().split(" ")
-
-documents = [f[0] for f in read_files() if f[0] is not None]
-possibilities = ['mixture of true and false', 'mostly false', 'no factual content', 'mostly true']
-predictions = [possibilities.index(f[1]) for f in read_files() if f[0] is not None]
-no_of_quotes = [f[2] for f in read_files() if f[0] is not None]
-len_of_text = [f[3] for f in read_files() if f[0] is not None]
+documents = document_text()
+predictions = veracity()
+features = feature_matrix([
+    "number_of_quotes"
+])
 
 #Calculate TF-IDF over the main text of each article, creating vector representations of them
+tokenize = lambda doc: doc.lower().split(" ")
 sklearn_tfidf = TfidfVectorizer(norm='l2',min_df=0, use_idf=True, smooth_idf=False, sublinear_tf=True, tokenizer=tokenize)
 sklearn_representation = sklearn_tfidf.fit_transform(documents)
 

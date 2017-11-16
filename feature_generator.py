@@ -29,6 +29,9 @@ def number_of_links(tree):
     """ return the number of links in the file """
     return len(tree.findall('links'))
 
+def contains_author(tree):
+    """Returns true if an author exists else False"""
+    return 1 if tree.findall('author') else 0
 
 ########################################################################################################################
 #Add features (element, tag) to file
@@ -45,12 +48,17 @@ def add_features():
         except:
             continue
 
+        #All features should be number valued
         #number of quotes
         tag, value = "number_of_quotes", str(number_of_qoutes(tree))
         tree = add_element(tree, tag, value)
 
         #number of links
         tag, value = "number_of_links", str(number_of_links(tree))
+        tree = add_element(tree, tag, value)
+
+        # number of links
+        tag, value = "contains_author", str(contains_author(tree))
         tree = add_element(tree, tag, value)
 
         #Other features here
