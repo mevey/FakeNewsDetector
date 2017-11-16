@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <article>
-    <author></author>
+    <author />
     <links href="http://www.politifact.com/truth-o-meter/statements/2016/jun/22/donald-trump/trump-still-wrong-his-claim-opposed-iraq-war-ahead/">
         <end>140</end>
         <start>136</start>
@@ -43,4 +42,4 @@
     <title>Trump repeats incorrect claim he opposed the Iraq War from outset</title>
     <uri>http://www.politico.com/story/2016/09/trump-oppose-iraq-war-fact-check-228742?cmpid=sf</uri>
     <veracity>mostly true</veracity>
-</article>
+<number_of_quotes>0</number_of_quotes><number_of_links>1</number_of_links></article>
