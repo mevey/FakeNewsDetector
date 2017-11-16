@@ -14,16 +14,20 @@ def read_files(cols):
         xmlfile = os.path.join(path, filename)
         tree = ET.parse(xmlfile)
         if cols == "mainText":
-            yield tree.find("mainText").text
-        if cols == "veracity":
+            if tree.find("mainText").text:
+                yield tree.find("mainText").text
+            else:
+                yield ''
+        elif cols == "veracity":
             v = possibilities.index(tree.find("veracity").text)
             yield v
-        for col in cols:
-            try:
-                data_row.append(int(tree.find(col).text))
-            except:
-                data_row.append(0)
-        yield data_row
+        else:
+            for col in cols:
+                try:
+                    data_row.append(int(tree.find(col).text))
+                except:
+                    data_row.append(0)
+            yield data_row
 
 
 def feature_matrix(cols):

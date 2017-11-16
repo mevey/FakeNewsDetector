@@ -11,7 +11,8 @@ np.random.seed(7)
 documents = document_text()
 predictions = veracity()
 features = feature_matrix([
-    "number_of_quotes"
+    "number_of_quotes",
+    "number_of_links"
 ])
 
 #Calculate TF-IDF over the main text of each article, creating vector representations of them
@@ -19,16 +20,16 @@ tokenize = lambda doc: doc.lower().split(" ")
 sklearn_tfidf = TfidfVectorizer(norm='l2',min_df=0, use_idf=True, smooth_idf=False, sublinear_tf=True, tokenizer=tokenize)
 sklearn_representation = sklearn_tfidf.fit_transform(documents)
 
-X_train, X_test, y_train, y_test = train_test_split(sklearn_representation, predictions, test_size = .3, random_state=25)
+X_train, X_test, y_train, y_test = train_test_split(sklearn_representation, predictions, test_size = 0, random_state=25)
 
 
-X = X_train.todense()
-Y = np.reshape(y_train, (1122, ))
-
+X = np.concatenate((X_train.todense() ,features), axis=1)
+Y = np.reshape(y_train, (len(y_train), ))
+dim = X.shape
 
 # model
 model = Sequential()
-model.add(Dense(12, input_dim=65611, activation='relu'))
+model.add(Dense(12, input_dim=dim[1], activation='relu'))
 model.add(Dense(8, activation='relu'))
 model.add(Dense(1, activation='sigmoid'))
 
