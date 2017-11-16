@@ -1,27 +1,13 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cross_validation import train_test_split
-import xml.etree.ElementTree as ET
 from keras.models import Sequential
 from keras.layers import Dense, Flatten
+from parser import *
 import numpy as np
 import os
 # fix random seed for reproducibility
 np.random.seed(7)
 
-def read_files():
-    """
-    For each xml file return the main text and the veracity label
-    """
-    path = 'data/train/'
-    for filename in os.listdir(path):
-        if not filename.endswith('.xml'): continue
-        xmlfile = os.path.join(path, filename)
-        tree = ET.parse(xmlfile)
-        try:
-            l = len(tree.find('mainText').text.split(" "))
-        except:
-            l = 0
-        yield (tree.find('mainText').text, tree.find('veracity').text, len(tree.findall('quotes')), l)
 
 tokenize = lambda doc: doc.lower().split(" ")
 
