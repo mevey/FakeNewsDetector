@@ -8,8 +8,8 @@ import os
 # fix random seed for reproducibility
 np.random.seed(7)
 
-documents = document_text()
-predictions = veracity()
+documents = get_document_text()
+predictions = get_veracity()
 features = feature_matrix([
     "number_of_quotes",
     "number_of_links"

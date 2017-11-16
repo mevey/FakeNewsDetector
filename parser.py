@@ -36,13 +36,13 @@ def feature_matrix(cols):
         data.append(row)
     return np.array(data)
 
-def document_text():
+def get_document_text():
     data = []
     for row in read_files("mainText"):
         data.append(row)
     return data
 
-def veracity():
+def get_veracity():
     data = []
     for row in read_files("veracity"):
         data.append(row)
