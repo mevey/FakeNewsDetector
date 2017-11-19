@@ -31,3 +31,4 @@ print(y_pred)
 confusion_matrix = confusion_matrix(y_test, y_pred)
 print(confusion_matrix)
 print(classification_report(y_test, y_pred))
+
