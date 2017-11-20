@@ -1,4 +1,6 @@
 import xml.etree.ElementTree as ET
+import english_syllable
+import textacy
 import os
 
 def add_element(tree, tag, value):
@@ -33,6 +35,17 @@ def contains_author(tree):
     """Returns true if an author exists else False"""
     return 1 if tree.findall('author') else 0
 
+def word_stats(tree):
+    """Returns a bunch of textacy stats on the text"""
+    stats = None
+    try:
+        text = tree.find("mainText").text
+        doc = textacy.Doc(text)
+        stats = textacy.text_stats.TextStats(doc)
+    except Exception as e:
+        print(e)
+    return stats
+
 ########################################################################################################################
 #Add features (element, tag) to file
 ########################################################################################################################
@@ -61,7 +74,22 @@ def add_features():
         tag, value = "contains_author", str(contains_author(tree))
         tree = add_element(tree, tag, value)
 
-        #Other features here
+        text_stats = word_stats(tree)
+        if text_stats:
+            tag, value = "number_of_words", str(text_stats.n_words)
+            tree = add_element(tree, tag, value)
+            tag, value = "number_of_unique_words", str(text_stats.n_unique_words)
+            tree = add_element(tree, tag, value)
+            tag, value = "number_of_long_words", str(text_stats.n_long_words)
+            tree = add_element(tree, tag, value)
+            tag, value = "number_of_monosyllable_words", str(text_stats.n_monosyllable_words)
+            tree = add_element(tree, tag, value)
+            tag, value = "number_of_polsyllable_words", str(text_stats.n_polysyllable_words)
+            tree = add_element(tree, tag, value)
+            tag, value = "number_of_syllables", str(text_stats.n_syllables)
+            tree = add_element(tree, tag, value)
+            tag, value = "flesch_readability_ease", str(text_stats.flesch_readability_ease)
+            tree = add_element(tree, tag, value)
 
         tree.write(xmlfile)
 

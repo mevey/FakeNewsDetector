@@ -4,3 +4,6 @@ scipy==1.0.0
 gensim==3.0.1
 keras==2.1.0
 tensorflow==1.4.0
+textacy==0.4.1
+cld2-cffi==0.1.4 
+spacy==2.0.3

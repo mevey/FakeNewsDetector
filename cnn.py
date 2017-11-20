@@ -12,7 +12,14 @@ documents = get_document_text()
 predictions = get_veracity()
 features = feature_matrix([
     "number_of_quotes",
-    "number_of_links"
+    "number_of_links",
+    "number_of_words",
+    "number_of_unique_words",
+    "number_of_long_words",
+    "number_of_monosyllable_words",
+    "number_of_polsyllable_words",
+    "number_of_syllables",
+    "flesch_readability_ease"
 ])
 
 #Calculate TF-IDF over the main text of each article, creating vector representations of them
