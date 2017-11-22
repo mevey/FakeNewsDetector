@@ -1,7 +1,7 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cross_validation import train_test_split
 from keras.models import Sequential
-from keras.layers import Dense, Flatten
+from keras.layers import Dense, Flatten, Convolution1D, Dropout
 from parser import *
 import numpy as np
 import os
@@ -24,21 +24,27 @@ features = feature_matrix([
 
 #Calculate TF-IDF over the main text of each article, creating vector representations of them
 tokenize = lambda doc: doc.lower().split(" ")
-sklearn_tfidf = TfidfVectorizer(norm='l2',min_df=0, use_idf=True, smooth_idf=False, sublinear_tf=True, tokenizer=tokenize)
+sklearn_tfidf = TfidfVectorizer(norm='l2',min_df=0, use_idf=True, smooth_idf=False, sublinear_tf=True, tokenizer=tokenize, max_features=10000)
 sklearn_representation = sklearn_tfidf.fit_transform(documents)
 
-X_train, X_test, y_train, y_test = train_test_split(sklearn_representation, predictions, test_size = 0, random_state=25)
+input_ = np.concatenate((sklearn_representation.todense() ,features), axis=1) #possible to array
+X_train, X_test, y_train, y_test = train_test_split(input_, predictions, test_size = 0, random_state=25)
 
 
-X = np.concatenate((X_train.todense() ,features), axis=1)
+X = X_train
 Y = np.reshape(y_train, (len(y_train), ))
 dim = X.shape
 
 # model
 model = Sequential()
-model.add(Dense(12, input_dim=dim[1], activation='relu'))
-model.add(Dense(8, activation='relu'))
-model.add(Dense(1, activation='sigmoid'))
+model.add(Convolution1D(64, dim[1], border_mode='same', input_length=dim[1]))
+model.add(Convolution1D(32, dim[1], border_mode='same'))
+model.add(Convolution1D(16, dim[1], border_mode='same'))
+model.add(Flatten())
+model.add(Dropout(0.2))
+model.add(Dense(180, activation='sigmoid'))
+model.add(Dropout(0.2))
+model.add(Dense(1,activation='sigmoid'))
 
 # Compile model
 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
