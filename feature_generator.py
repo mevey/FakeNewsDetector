@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
-import english_syllable
 import textacy
+import string
 import os
 
 def add_element(tree, tag, value):
@@ -46,6 +46,24 @@ def word_stats(tree):
         print(e)
     return stats
 
+def pronouns(tree):
+    tokenize = lambda doc: doc.lower().split(" ")
+    first_person = ["i", "me", "we", "us"]
+    second_person = ["you"]
+    third_person = ["she", "her", "him", "it", "they", "them"]
+    f,s,t = 0,0,0
+    try:
+        text = tree.find("mainText").text
+        text = "".join([ch for ch in text if ch not in string.punctuation])
+        list_of_words = tokenize(text)
+        for word in list_of_words:
+            if word in first_person: f += 1
+            if word in second_person: s += 1
+            if word in third_person: t += 1
+    except Exception as e:
+        print(e)
+    return [f,s,t]
+
 ########################################################################################################################
 #Add features (element, tag) to file
 ########################################################################################################################
@@ -80,6 +98,8 @@ def add_features():
             tree = add_element(tree, tag, value)
             tag, value = "number_of_unique_words", str(text_stats.n_unique_words)
             tree = add_element(tree, tag, value)
+            tag, value = "number_of_sentences", str(text_stats.n_sents)
+            tree = add_element(tree, tag, value)
             tag, value = "number_of_long_words", str(text_stats.n_long_words)
             tree = add_element(tree, tag, value)
             tag, value = "number_of_monosyllable_words", str(text_stats.n_monosyllable_words)
@@ -91,6 +111,28 @@ def add_features():
             tag, value = "flesch_readability_ease", str(text_stats.flesch_readability_ease)
             tree = add_element(tree, tag, value)
 
+            #pronouns
+            first, second, third = pronouns(tree)
+            tag, value = "first_person_pronouns", str(first)
+            tree = add_element(tree, tag, value)
+            tag, value = "second_person_pronouns", str(second)
+            tree = add_element(tree, tag, value)
+            tag, value = "third_person_pronouns", str(third)
+            tree = add_element(tree, tag, value)
+
+            #To do
+            """
+            3)Grammatical Complexity (number of short
+            sentences, number of long sentences, FleshKincaid
+            grade level, average number of
+            words per sentence, sentence complexity,
+            number of conjunctions),
+            4) Uncertainty (Number of words express certainty,
+            number of tentative words, modal
+            verbs)
+            5) Specificity and Expressiveness (rate of adjectives
+            and adverbs, number of affective terms)
+            """
         tree.write(xmlfile)
 
 if __name__ == '__main__':

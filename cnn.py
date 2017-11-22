@@ -15,6 +15,7 @@ features = feature_matrix([
     "number_of_links",
     "number_of_words",
     "number_of_unique_words",
+    "number_of_sentences",
     "number_of_long_words",
     "number_of_monosyllable_words",
     "number_of_polsyllable_words",

@@ -1,9 +1,6 @@
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegressionCV
-from sklearn.metrics import classification_report
-from sklearn.metrics import confusion_matrix, roc_auc_score
-import xml.etree.ElementTree as ET
 from parser import *
 import os
 from gensim.models import Word2Vec
@@ -14,12 +11,16 @@ features = feature_matrix([
     "number_of_quotes",
     "number_of_links",
     "number_of_words",
+    "number_of_sentences",
     "number_of_unique_words",
     "number_of_long_words",
     "number_of_monosyllable_words",
     "number_of_polsyllable_words",
     "number_of_syllables",
-    "flesch_readability_ease"
+    "flesch_readability_ease",
+    "first_person_pronouns",
+    "second_person_pronouns",
+    "third_person_pronouns"
 ])
 
 #Calculate TF-IDF over the main text of each article, creating vector representations of them
@@ -28,9 +29,8 @@ sklearn_tfidf = TfidfVectorizer(norm='l2', sublinear_tf=True, tokenizer=tokenize
 sklearn_representation = sklearn_tfidf.fit_transform(documents)
 print("Done vectorizing")
 
+input_ = np.concatenate((sklearn_representation.toarray() ,features), axis=1)
 #input_ = sklearn_representation
-#input_ = np.concatenate((sklearn_representation.toarray() ,features), axis=1)
-input_ = sklearn_representation
 
 # Splits data into training and test
 X_train, X_test, y_train, y_test = train_test_split(input_, predictions, test_size = .3, random_state=25)
