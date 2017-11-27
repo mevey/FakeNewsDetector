@@ -14,13 +14,18 @@ features = feature_matrix([
     "number_of_quotes",
     "number_of_links",
     "number_of_words",
-    "number_of_unique_words",
     "number_of_sentences",
+    "number_of_unique_words",
     "number_of_long_words",
     "number_of_monosyllable_words",
     "number_of_polsyllable_words",
     "number_of_syllables",
-    "flesch_readability_ease"
+    "flesch_readability_ease",
+    "first_person_pronouns",
+    "second_person_pronouns",
+    "third_person_pronouns",
+    "conjunction_count",
+    "modal_verb_count",
 ])
 
 #Calculate TF-IDF over the main text of each article, creating vector representations of them

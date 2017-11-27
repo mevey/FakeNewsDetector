@@ -20,7 +20,9 @@ features = feature_matrix([
     "flesch_readability_ease",
     "first_person_pronouns",
     "second_person_pronouns",
-    "third_person_pronouns"
+    "third_person_pronouns",
+    "conjunction_count",
+    "modal_verb_count",
 ])
 
 #Calculate TF-IDF over the main text of each article, creating vector representations of them

@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ET
 import textacy
 import string
+import nltk
 import os
 
 def add_element(tree, tag, value):
@@ -46,23 +47,29 @@ def word_stats(tree):
         print(e)
     return stats
 
-def pronouns(tree):
-    tokenize = lambda doc: doc.lower().split(" ")
+def pronouns_conjunctions(tree):
+    tokenize = lambda doc: doc.lower().split()
     first_person = ["i", "me", "we", "us"]
     second_person = ["you"]
     third_person = ["she", "her", "him", "it", "they", "them"]
-    f,s,t = 0,0,0
+    f, s, t, conjunction_count, modal_verb_count = 0,0,0,0,0
     try:
         text = tree.find("mainText").text
         text = "".join([ch for ch in text if ch not in string.punctuation])
-        list_of_words = tokenize(text)
-        for word in list_of_words:
+
+        list_of_words_tags = nltk.pos_tag(tokenize(text))
+
+        for word, tag in list_of_words_tags:
             if word in first_person: f += 1
-            if word in second_person: s += 1
-            if word in third_person: t += 1
+            elif word in second_person: s += 1
+            elif word in third_person: t += 1
+            if tag == 'CC':
+                conjunction_count += 1
+            elif tag == 'MD':
+                modal_verb_count += 1
     except Exception as e:
         print(e)
-    return [f,s,t]
+    return [f, s, t, conjunction_count, modal_verb_count]
 
 ########################################################################################################################
 #Add features (element, tag) to file
@@ -106,18 +113,23 @@ def add_features():
             tree = add_element(tree, tag, value)
             tag, value = "number_of_polsyllable_words", str(text_stats.n_polysyllable_words)
             tree = add_element(tree, tag, value)
-            tag, value = "number_of_syllables", str(text_stats.n_syllables)
+            avg_no_of_syllables = text_stats.n_syllables / text_stats.n_sents
+            tag, value = "average_number_of_syllables", str(avg_no_of_syllables)
             tree = add_element(tree, tag, value)
             tag, value = "flesch_readability_ease", str(text_stats.flesch_readability_ease)
             tree = add_element(tree, tag, value)
 
-            #pronouns
-            first, second, third = pronouns(tree)
+            #pronouns, conjunctions, modal verbs
+            first, second, third, conjunction_count, modal_verb_count = pronouns_conjunctions(tree)
             tag, value = "first_person_pronouns", str(first)
             tree = add_element(tree, tag, value)
             tag, value = "second_person_pronouns", str(second)
             tree = add_element(tree, tag, value)
             tag, value = "third_person_pronouns", str(third)
+            tree = add_element(tree, tag, value)
+            tag, value = "conjunction_count", str(conjunction_count)
+            tree = add_element(tree, tag, value)
+            tag, value = "modal_verb_count", str(modal_verb_count)
             tree = add_element(tree, tag, value)
 
             #To do
