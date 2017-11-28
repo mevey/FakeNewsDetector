@@ -1,0 +1,91 @@
+number_of_words...............	docs	max	min	mode	mean
+mixture of true and false.....	212	1870	0	[(0, 19)]	394.0377358490566
+mostly false..................	87	1410	0	[(0, 11)]	383.42528735632186
+no factual content............	64	2038	0	[(0, 6)]	454.984375
+mostly true...................	1264	5638	0	[(0, 73)]	584.129746835443
+
+
+number_of_unique_words........	docs	max	min	mode	mean
+mixture of true and false.....	212	690	0	[(0, 19)]	204.38679245283018
+mostly false..................	87	594	0	[(0, 11)]	200.0
+no factual content............	64	687	0	[(0, 6)]	213.34375
+mostly true...................	1264	2166	0	[(0, 73)]	273.80696202531647
+
+
+number_of_sentences...........	docs	max	min	mode	mean
+mixture of true and false.....	212	106	0	[(0, 19)]	24.650943396226417
+mostly false..................	87	79	0	[(0, 11)]	23.873563218390803
+no factual content............	64	137	0	[(0, 6)]	29.40625
+mostly true...................	1264	468	0	[(0, 73)]	35.159018987341774
+
+
+number_of_long_words..........	docs	max	min	mode	mean
+mixture of true and false.....	212	559	0	[(0, 19)]	90.37735849056604
+mostly false..................	87	441	0	[(0, 11)]	88.57471264367815
+no factual content............	64	490	0	[(0, 6)]	99.125
+mostly true...................	1264	1433	0	[(0, 73)]	139.75632911392404
+
+
+number_of_monosyllable_words..	docs	max	min	mode	mean
+mixture of true and false.....	212	1181	0	[(0, 19)]	273.62735849056605
+mostly false..................	87	862	0	[(0, 11)]	265.632183908046
+no factual content............	64	1425	0	[(0, 6)]	320.390625
+mostly true...................	1264	4053	0	[(0, 73)]	398.8615506329114
+
+
+number_of_polsyllable_words...	docs	max	min	mode	mean
+mixture of true and false.....	212	311	0	[(0, 19)]	46.16981132075472
+mostly false..................	87	259	0	[(0, 11)]	43.98850574712644
+no factual content............	64	289	0	[(0, 6)]	49.34375
+mostly true...................	1264	661	0	[(0, 73)]	68.37104430379746
+
+
+average_number_of_syllables...	docs	max	min	mode	mean
+mixture of true and false.....	212	0	0	[(0, 212)]	0.0
+mostly false..................	87	0	0	[(0, 87)]	0.0
+no factual content............	64	0	0	[(0, 64)]	0.0
+mostly true...................	1264	0	0	[(0, 1264)]	0.0
+
+
+flesch_readability_ease.......	docs	max	min	mode	mean
+mixture of true and false.....	212	0	0	[(0, 212)]	0.0
+mostly false..................	87	0	0	[(0, 87)]	0.0
+no factual content............	64	0	0	[(0, 64)]	0.0
+mostly true...................	1264	0	0	[(0, 1264)]	0.0
+
+
+first_person_pronouns.........	docs	max	min	mode	mean
+mixture of true and false.....	212	22	0	[(0, 54)]	3.339622641509434
+mostly false..................	87	22	0	[(0, 28)]	3.6091954022988504
+no factual content............	64	33	0	[(0, 20)]	6.578125
+mostly true...................	1264	88	0	[(0, 280)]	5.3520569620253164
+
+
+second_person_pronouns........	docs	max	min	mode	mean
+mixture of true and false.....	212	10	0	[(0, 89)]	1.490566037735849
+mostly false..................	87	11	0	[(0, 36)]	1.7241379310344827
+no factual content............	64	22	0	[(0, 28)]	3.140625
+mostly true...................	1264	33	0	[(0, 615)]	1.7753164556962024
+
+
+third_person_pronouns.........	docs	max	min	mode	mean
+mixture of true and false.....	212	42	0	[(0, 24)]	8.952830188679245
+mostly false..................	87	47	0	[(0, 13)]	9.793103448275861
+no factual content............	64	85	0	[(0, 15)]	11.578125
+mostly true...................	1264	302	0	[(0, 130)]	10.550632911392405
+
+
+conjunction_count.............	docs	max	min	mode	mean
+mixture of true and false.....	212	61	0	[(0, 23)]	12.245283018867925
+mostly false..................	87	50	0	[(0, 13)]	12.28735632183908
+no factual content............	64	92	0	[(0, 10)]	15.921875
+mostly true...................	1264	219	0	[(0, 84)]	17.4375
+
+
+modal_verb_count..............	docs	max	min	mode	mean
+mixture of true and false.....	212	18	0	[(0, 33)]	3.94811320754717
+mostly false..................	87	18	0	[(0, 16)]	4.149425287356322
+no factual content............	64	34	0	[(0, 17)]	5.578125
+mostly true...................	1264	58	0	[(0, 177)]	5.708860759493671
+
+
