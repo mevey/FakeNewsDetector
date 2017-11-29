@@ -71,6 +71,43 @@ def pronouns_conjunctions(tree):
         print(e)
     return [f, s, t, conjunction_count, modal_verb_count]
 
+"""
+Functions for uncertainty counting uncertainty words (hedge and weasel words), and anything else using a gazetteer.
+For the source of the word dictionaries I use, please see:
+https://github.com/words/hedges
+https://github.com/words/weasels
+"""
+
+def get_gazetteer(filename):
+    """Takes a text file and returns a list object, with each row as an element"""
+    content = None # Intialize
+    with open(filename) as f:
+        content = f.readlines()
+    content = [line.strip() for line in content] # Remove newlines from the words
+    result = []
+    for word in content: # Strip any string that contains a substring - these throw off the overall word count
+        if not any([r in word for r in result if word != r]):
+            result.append(word)
+    return result
+
+def get_word_count(text,list_of_words): 
+    """Takes list of words and text, returns # of occurences of each word from the list in the text"""
+    count = 0
+    for word in hedge_words: 
+        count += text.lower().count(word)
+    return count
+
+def get_number_words(text,filename):
+    """
+    Takes a dictionary txt file and text, returns count of the file words in the text.
+    Created for the hedge and weasel word features.  
+    """
+    hedge_words = get_gazetteer(filename)
+    print(hedge_words)
+    count = get_word_count(text,hedge_words)
+    return count
+
+
 ########################################################################################################################
 #Add features (element, tag) to file
 ########################################################################################################################
@@ -91,7 +128,7 @@ def add_features():
         tag, value = "number_of_quotes", str(number_of_qoutes(tree))
         tree = add_element(tree, tag, value)
 
-        #number of links
+        # number of links
         tag, value = "number_of_links", str(number_of_links(tree))
         tree = add_element(tree, tag, value)
 
@@ -119,7 +156,7 @@ def add_features():
             tag, value = "flesch_readability_ease", str(text_stats.flesch_readability_ease)
             tree = add_element(tree, tag, value)
 
-            #pronouns, conjunctions, modal verbs
+            # pronouns, conjunctions, modal verbs
             first, second, third, conjunction_count, modal_verb_count = pronouns_conjunctions(tree)
             tag, value = "first_person_pronouns", str(first)
             tree = add_element(tree, tag, value)
@@ -131,6 +168,10 @@ def add_features():
             tree = add_element(tree, tag, value)
             tag, value = "modal_verb_count", str(modal_verb_count)
             tree = add_element(tree, tag, value)
+
+            # Uncertainty words
+            #tag, value = "number_of_hedge_words", str(avg_no_of_syllables)
+            #tag, value = "number_of_weasel_words", str(avg_no_of_syllables)
 
             #To do
             """
