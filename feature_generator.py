@@ -97,15 +97,20 @@ def get_word_count(text,list_of_words):
         count += text.lower().count(word)
     return count
 
-def get_number_words(text,filename):
+def get_number_words(tree,gazetteer):
     """
     Takes a dictionary txt file and text, returns count of the file words in the text.
     Created for the hedge and weasel word features.  
     """
-    hedge_words = get_gazetteer(filename)
-    print(hedge_words)
-    count = get_word_count(text,hedge_words)
-    return count
+    text = ''
+    if tree.find("mainText").text:
+        text = tree.find("mainText").text
+    count = 0
+    if text == '': # Return count = 0 if there is no mainText (precaution)
+        return count
+    else: 
+        count = get_word_count(text,gazetteer)
+        return count
 
 
 ########################################################################################################################
@@ -170,8 +175,8 @@ def add_features():
             tree = add_element(tree, tag, value)
 
             # Uncertainty words
-            #tag, value = "number_of_hedge_words", str(avg_no_of_syllables)
-            #tag, value = "number_of_weasel_words", str(avg_no_of_syllables)
+            # tag, value = "number_of_hedge_words", str(avg_no_of_syllables)
+            # tag, value = "number_of_weasel_words", str(avg_no_of_syllables)
 
             #To do
             """
