@@ -90,16 +90,16 @@ mostly true...................	1264	58	0	[(2, 152)]	5.938291139240507
 
 
 number_of_hedge_words.........	docs	max	min	mode	mean
-mixture of true and false.....	212	0	0	[(0, 212)]	0.0
-mostly false..................	87	0	0	[(0, 87)]	0.0
-no factual content............	64	0	0	[(0, 64)]	0.0
-mostly true...................	1264	0	0	[(0, 1264)]	0.0
+mixture of true and false.....	212	95	0	[(22, 13)]	24.099056603773583
+mostly false..................	87	64	0	[(0, 7)]	24.57471264367816
+no factual content............	64	115	0	[(17, 3)]	28.234375
+mostly true...................	1264	392	0	[(21, 46)]	32.21756329113924
 
 
 number_of_weasel_words........	docs	max	min	mode	mean
-mixture of true and false.....	212	0	0	[(0, 212)]	0.0
-mostly false..................	87	0	0	[(0, 87)]	0.0
-no factual content............	64	0	0	[(0, 64)]	0.0
-mostly true...................	1264	0	0	[(0, 1264)]	0.0
+mixture of true and false.....	212	129	0	[(38, 10)]	41.79245283018868
+mostly false..................	87	103	0	[(0, 7)]	41.701149425287355
+no factual content............	64	193	0	[(0, 3)]	47.59375
+mostly true...................	1264	676	0	[(33, 30)]	55.16851265822785
 
 

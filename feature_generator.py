@@ -179,8 +179,10 @@ def add_features():
         weasel_words = get_word_list('data/weasel_words.txt')
         number_of_hedge_words = get_number_words(tree,hedge_words)
         tag, value = "number_of_hedge_words", str(number_of_hedge_words)
+        tree = add_element(tree, tag, value)
         number_of_weasel_words = get_number_words(tree,weasel_words)
         tag, value = "number_of_weasel_words", str(number_of_weasel_words)
+        tree = add_element(tree, tag, value)
 
         #To do
         """
