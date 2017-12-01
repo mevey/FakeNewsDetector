@@ -78,7 +78,7 @@ https://github.com/words/hedges
 https://github.com/words/weasels
 """
 
-def get_gazetteer(filename):
+def get_word_list(filename):
     """Takes a text file and returns a list object, with each row as an element"""
     content = None # Intialize
     with open(filename) as f:
@@ -93,11 +93,11 @@ def get_gazetteer(filename):
 def get_word_count(text,list_of_words): 
     """Takes list of words and text, returns # of occurences of each word from the list in the text"""
     count = 0
-    for word in hedge_words: 
+    for word in list_of_words: 
         count += text.lower().count(word)
     return count
 
-def get_number_words(tree,gazetteer):
+def get_number_words(tree,word_list):
     """
     Takes a dictionary txt file and text, returns count of the file words in the text.
     Created for the hedge and weasel word features.  
@@ -109,7 +109,7 @@ def get_number_words(tree,gazetteer):
     if text == '': # Return count = 0 if there is no mainText (precaution)
         return count
     else: 
-        count = get_word_count(text,gazetteer)
+        count = get_word_count(text,word_list)
         return count
 
 
@@ -161,36 +161,40 @@ def add_features():
             tag, value = "flesch_readability_ease", str(text_stats.flesch_readability_ease)
             tree = add_element(tree, tag, value)
 
-            # pronouns, conjunctions, modal verbs
-            first, second, third, conjunction_count, modal_verb_count = pronouns_conjunctions(tree)
-            tag, value = "first_person_pronouns", str(first)
-            tree = add_element(tree, tag, value)
-            tag, value = "second_person_pronouns", str(second)
-            tree = add_element(tree, tag, value)
-            tag, value = "third_person_pronouns", str(third)
-            tree = add_element(tree, tag, value)
-            tag, value = "conjunction_count", str(conjunction_count)
-            tree = add_element(tree, tag, value)
-            tag, value = "modal_verb_count", str(modal_verb_count)
-            tree = add_element(tree, tag, value)
+        # pronouns, conjunctions, modal verbs
+        first, second, third, conjunction_count, modal_verb_count = pronouns_conjunctions(tree)
+        tag, value = "first_person_pronouns", str(first)
+        tree = add_element(tree, tag, value)
+        tag, value = "second_person_pronouns", str(second)
+        tree = add_element(tree, tag, value)
+        tag, value = "third_person_pronouns", str(third)
+        tree = add_element(tree, tag, value)
+        tag, value = "conjunction_count", str(conjunction_count)
+        tree = add_element(tree, tag, value)
+        tag, value = "modal_verb_count", str(modal_verb_count)
+        tree = add_element(tree, tag, value)
 
-            # Uncertainty words
-            # tag, value = "number_of_hedge_words", str(avg_no_of_syllables)
-            # tag, value = "number_of_weasel_words", str(avg_no_of_syllables)
+        # Uncertainty words
+        hedge_words = get_word_list('data/hedge_words.txt')
+        weasel_words = get_word_list('data/weasel_words.txt')
+        number_of_hedge_words = get_number_words(tree,hedge_words)
+        tag, value = "number_of_hedge_words", str(number_of_hedge_words)
+        number_of_weasel_words = get_number_words(tree,weasel_words)
+        tag, value = "number_of_weasel_words", str(number_of_weasel_words)
 
-            #To do
-            """
-            3)Grammatical Complexity (number of short
-            sentences, number of long sentences, FleshKincaid
-            grade level, average number of
-            words per sentence, sentence complexity,
-            number of conjunctions),
-            4) Uncertainty (Number of words express certainty,
-            number of tentative words, modal
-            verbs)
-            5) Specificity and Expressiveness (rate of adjectives
-            and adverbs, number of affective terms)
-            """
+        #To do
+        """
+        3)Grammatical Complexity (number of short
+        sentences, number of long sentences, FleshKincaid
+        grade level, average number of
+        words per sentence, sentence complexity,
+        number of conjunctions),
+        4) Uncertainty (Number of words express certainty,
+        number of tentative words, modal
+        verbs)
+        5) Specificity and Expressiveness (rate of adjectives
+        and adverbs, number of affective terms)
+        """
         tree.write(xmlfile)
 
 if __name__ == '__main__':

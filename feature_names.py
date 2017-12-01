@@ -11,5 +11,7 @@ feature_names = [
     "second_person_pronouns",
     "third_person_pronouns",
     "conjunction_count",
-    "modal_verb_count"
+    "modal_verb_count",
+    "number_of_hedge_words",
+    "number_of_weasel_words"
 ]

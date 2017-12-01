@@ -55,37 +55,51 @@ mostly true...................	1264	0	0	[(0, 1264)]	0.0
 
 
 first_person_pronouns.........	docs	max	min	mode	mean
-mixture of true and false.....	212	22	0	[(0, 54)]	3.339622641509434
-mostly false..................	87	22	0	[(0, 28)]	3.6091954022988504
-no factual content............	64	33	0	[(0, 20)]	6.578125
-mostly true...................	1264	88	0	[(0, 280)]	5.3520569620253164
+mixture of true and false.....	212	22	0	[(1, 45)]	3.5330188679245285
+mostly false..................	87	22	0	[(0, 22)]	3.8275862068965516
+no factual content............	64	33	0	[(0, 15)]	7.0
+mostly true...................	1264	178	0	[(0, 231)]	5.643987341772152
 
 
 second_person_pronouns........	docs	max	min	mode	mean
-mixture of true and false.....	212	10	0	[(0, 89)]	1.490566037735849
-mostly false..................	87	11	0	[(0, 36)]	1.7241379310344827
-no factual content............	64	22	0	[(0, 28)]	3.140625
-mostly true...................	1264	33	0	[(0, 615)]	1.7753164556962024
+mixture of true and false.....	212	10	0	[(0, 78)]	1.6179245283018868
+mostly false..................	87	11	0	[(0, 31)]	1.9425287356321839
+no factual content............	64	22	0	[(0, 24)]	3.28125
+mostly true...................	1264	61	0	[(0, 576)]	1.8931962025316456
 
 
 third_person_pronouns.........	docs	max	min	mode	mean
-mixture of true and false.....	212	42	0	[(0, 24)]	8.952830188679245
-mostly false..................	87	47	0	[(0, 13)]	9.793103448275861
-no factual content............	64	85	0	[(0, 15)]	11.578125
-mostly true...................	1264	302	0	[(0, 130)]	10.550632911392405
+mixture of true and false.....	212	42	0	[(6, 24)]	9.622641509433961
+mostly false..................	87	47	0	[(6, 9)]	10.758620689655173
+no factual content............	64	85	0	[(0, 9)]	13.046875
+mostly true...................	1264	302	0	[(5, 99)]	11.01503164556962
 
 
 conjunction_count.............	docs	max	min	mode	mean
-mixture of true and false.....	212	61	0	[(0, 23)]	12.245283018867925
-mostly false..................	87	50	0	[(0, 13)]	12.28735632183908
-no factual content............	64	92	0	[(0, 10)]	15.921875
-mostly true...................	1264	219	0	[(0, 84)]	17.4375
+mixture of true and false.....	212	61	0	[(12, 21)]	13.165094339622641
+mostly false..................	87	50	0	[(7, 9)]	13.551724137931034
+no factual content............	64	92	0	[(3, 5)]	17.390625
+mostly true...................	1264	219	0	[(8, 80)]	18.026898734177216
 
 
 modal_verb_count..............	docs	max	min	mode	mean
-mixture of true and false.....	212	18	0	[(0, 33)]	3.94811320754717
-mostly false..................	87	18	0	[(0, 16)]	4.149425287356322
-no factual content............	64	34	0	[(0, 17)]	5.578125
-mostly true...................	1264	58	0	[(0, 177)]	5.708860759493671
+mixture of true and false.....	212	18	0	[(4, 34)]	4.410377358490566
+mostly false..................	87	19	0	[(1, 14)]	4.885057471264368
+no factual content............	64	34	0	[(0, 12)]	5.9375
+mostly true...................	1264	58	0	[(2, 152)]	5.938291139240507
+
+
+number_of_hedge_words.........	docs	max	min	mode	mean
+mixture of true and false.....	212	0	0	[(0, 212)]	0.0
+mostly false..................	87	0	0	[(0, 87)]	0.0
+no factual content............	64	0	0	[(0, 64)]	0.0
+mostly true...................	1264	0	0	[(0, 1264)]	0.0
+
+
+number_of_weasel_words........	docs	max	min	mode	mean
+mixture of true and false.....	212	0	0	[(0, 212)]	0.0
+mostly false..................	87	0	0	[(0, 87)]	0.0
+no factual content............	64	0	0	[(0, 64)]	0.0
+mostly true...................	1264	0	0	[(0, 1264)]	0.0
 
 
