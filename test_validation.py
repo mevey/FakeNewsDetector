@@ -7,7 +7,7 @@ np.random.seed(1337) # Fix a random seed to make (sorta) reproducible results
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split, GridSearchCV # Tools for splitting data, tuning hyperparameters
 from sklearn.linear_model import LogisticRegressionCV # Logreg model
-from sklearn.metrics import classification_report, accuracy_score, confusion_matrix # Evaluation tools
+from sklearn.metrics import classification_report, accuracy_score, fbeta_score, make_scorer # Evaluation tools
 from nltk.tokenize import word_tokenize # Tokenizer
 
 import xml.etree.ElementTree as ET
@@ -22,26 +22,32 @@ from keras.utils import to_categorical
 from keras import backend as K
 from keras.regularizers import l2
 from keras.wrappers.scikit_learn import KerasClassifier # Wrapper to use Keras model in sklearn
-K.set_image_dim_ordering('tf')
 
 ########################################################################################################################
 # Read in the data 
 ########################################################################################################################
+possibilities = ['mixture of true and false', 'mostly false', 'no factual content', 'mostly true']
 
 def read_files(cols, orientation="all"):
     """
     For each xml file return a matrix of values asked for
     """
     path = 'data/train/'
-    possibilities = ['mixture of true and false', 'mostly false', 'mostly true'] 
     for filename in os.listdir(path):
         data_row = []
         if not filename.endswith('.xml'): continue
         xmlfile = os.path.join(path, filename)
         tree = ET.parse(xmlfile)
-        if not tree.find("mainText").text or tree.find("veracity").text == "no factual content": continue
+
+# FOR TESTING WHOLE DATASET, use below:        
+        if not tree.find("mainText").text: continue
         if orientation != "all" and tree.find("orientation").text != orientation:
             continue
+        
+#COMMENT IN THE FOLLOWING two if statements to test the partisan-only dataset
+        # if not tree.find("mainText").text or tree.find("veracity").text == "no factual content": continue
+        # if orientation == "all" and tree.find("orientation").text == 'mainstream':
+            continue    
         if cols == "mainText":
             if tree.find("mainText").text:
                 yield tree.find("mainText").text
@@ -172,9 +178,13 @@ features = feature_matrix([
     "conjunction_count",
     "modal_verb_count",
     "number_of_hedge_words",
-    "number_of_weasel_words"
+    "number_of_weasel_words",
+    "number_of_links",
+    "number_of_quotes",
+    "contains_author"
 ])
 
+fbeta = make_scorer(fbeta_score,beta=5.0)
 
 # Version 1: Use embeddings and concatenate all features, then do train-test split. 
 articles_matrix = docs_to_matrix(documents,embeddings)
@@ -184,7 +194,7 @@ x_training_set, x_final_test, y_training_set, y_final_test = train_test_split(ar
 
 # Final Model test of the Logreg embeddings
 print("TEST RESULTS OF THE LOGREG WITH EMBEDDINGS")
-logreg = LogisticRegressionCV(penalty='l2', scoring="f1",Cs=[.00001,.0001,.001,.01,.1,.2,.5,.8,1,2,5,10,100,1000])
+logreg = LogisticRegressionCV(penalty='l2', scoring='f1',Cs=[.00001,.0001,.001,.01,.1,.2,.5,.8,1,2,5,10,100,1000])
 logreg.fit(x_training_set,y_training_set)
 y_pred = logreg.predict(x_final_test)
 print(classification_report(y_final_test, y_pred))
@@ -215,6 +225,11 @@ EMBEDDING_DIM = 300 # Google News embeddings are 300 dimensional
 DROPOUT = 0.5 # Dropout strength 
 FILTERS = 300 # Number of filters in the convolutional layers
 k = 5 # Sliding k window size for convolutional layers
+class_weight = {0:3,1:3,2:1,3:1}
+batch_size = 300
+# possibilities = ['mixture of true and false', 'mostly false', 'no factual content', 'mostly true']
+
+
 
 # Prepare tokenizer
 t = Tokenizer()
@@ -229,7 +244,6 @@ data = pad_sequences(encoded_docs, maxlen=MAX_SEQUENCE_LENGTH, padding='post')
 
 # Re-using the list of integer labels generated earlier, make a binary class matrix
 labels = to_categorical(np.asarray(predictions))
-possibilities = ['mixture of true and false', 'mostly false', 'mostly true']
 # Split into train and test sets - I try 2 versions, one from Keras and one using sklearn functions
 
 # Split the full dataset into data used for training and the final test stage
@@ -280,7 +294,31 @@ def create_cnn(embedding_weights=embedding_weights,embedding_dim=EMBEDDING_DIM,m
     model.compile(loss='categorical_crossentropy',
                   optimizer='rmsprop', # rmsprop is the standard
                   metrics=['acc'])
+    print(model.summary())
     return model
+
+
+########################################################################################################################
+# Bonus round - LSTM Model
+########################################################################################################################
+
+def create_rnn(embedding_weights=embedding_weights,embedding_dim=EMBEDDING_DIM,max_sequence_len=MAX_SEQUENCE_LENGTH,\
+    filters=FILTERS,dropout=DROPOUT):
+    embedding_layer = Embedding(vocab_size,
+                                EMBEDDING_DIM,
+                                weights=[embedding_weights],
+                                input_length=MAX_SEQUENCE_LENGTH,
+                                trainable=False)
+
+    rnn = Sequential()
+    rnn.add(embedding_layer)
+    rnn.add(Dropout(0.5))
+    rnn.add(LSTM(300))
+    rnn.add(Dropout(0.5))
+    rnn.add(Dense(len(possibilities), activation='sigmoid'))
+    rnn.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    print(rnn.summary())
+    return rnn
 
 ########################################################################################################################
 # Run cross validation over the hyperparameters
@@ -293,8 +331,8 @@ k_dev = [3,4,5,6]
 epochs_dev = [1,2,3] # No change across epoch values
 batch_size_dev = [16,32,64,128,256,300]
 # param_grid = dict(max_sequence_len=sequence_len_dev,filters=filters_dev,k=k_dev,dropout=dropout_dev) 
-param_grid = dict(epochs=epochs_dev,batch_size=batch_size_dev)
-
+# param_grid = dict(epochs=epochs_dev,batch_size=batch_size_dev)
+param_grid = dict(max_sequence_len=[500,600,700],k=[4,5,6],dropout=[0.5,0.9]) 
 
 # # Cross-validation using sklearn's gridsearchCV (WARNING: very costly call)
 # cnn = KerasClassifier(build_fn=create_cnn,embedding_weights=embedding_weights)
@@ -311,34 +349,27 @@ param_grid = dict(epochs=epochs_dev,batch_size=batch_size_dev)
 
 
 
-
 ########################################################################################################################
 # Final evaluation steps
 ########################################################################################################################
 
 def make_classifications_list(binary_targets):
-
     """This is  for turning the output of Keras models into a list of class integers"""
     y_true = list(binary_targets)
     for i in range(len(y_true)):
-        # if y_true[i][3] == 1.:
-        #     y_true[i] = 3
-        # elif y_true[i][2] == 1.:
-        #     y_true[i] = 2
-        # elif y_true[i][1] == 1.:
-        #     y_true[i] = 1
-        # else:
-        #     y_true[i] = 0
-        for j in range(len(y_true[i])):
+        classification = None
+        for j in range(y_true[i].shape[0]):
             if y_true[i][j] == 1.:
-                y_true[i] = j
+                classification = j
+        y_true[i] = classification
     return y_true
 
 
-# Final Model Test
+
+# Final Model Test - CNN
 model = create_cnn(embedding_weights,EMBEDDING_DIM,MAX_SEQUENCE_LENGTH,FILTERS,k,DROPOUT)
-model.fit(x_train, y_train,epochs=1, batch_size=FILTERS)
-y_prob = model.predict(x_final_test,batch_size=FILTERS)
+model.fit(x_train, y_train,epochs=1, batch_size=batch_size)
+y_prob = model.predict(x_final_test,batch_size=batch_size)
 y_pred = y_prob.argmax(axis=-1) # Get the predicted class (not probabilites of each)
 ypred = list(y_pred) # Turn array into list
 y_true = make_classifications_list(y_final_test) # Turn Matrix of targets into list
@@ -347,23 +378,40 @@ print(accuracy_score(y_true,y_pred))
 scores = model.evaluate(x_final_test,y_final_test,verbose=0)
 print("Accuracy: %.2f%%" % (scores[1]*100))
 
+# # Final Model Test - LSTM
+# model = create_rnn(embedding_weights,EMBEDDING_DIM,MAX_SEQUENCE_LENGTH,FILTERS,DROPOUT)
+# model.fit(x_train, y_train,epochs=1, batch_size=batch_size)
+# y_prob = model.predict(x_final_test,batch_size=batch_size)
+# y_pred = y_prob.argmax(axis=-1) # Get the predicted class (not probabilites of each)
+# ypred = list(y_pred) # Turn array into list
+# y_true = make_classifications_list(y_final_test) # Turn Matrix of targets into list
+# print(classification_report(y_true, y_pred))
+# print(accuracy_score(y_true,y_pred))
+# scores = model.evaluate(x_final_test,y_final_test,verbose=0)
+# print("Accuracy: %.2f%%" % (scores[1]*100))
 
 
 
-# # One-off dev test
+# # One-off dev test - CNN
 # model = create_cnn(embedding_weights,EMBEDDING_DIM,MAX_SEQUENCE_LENGTH,FILTERS,k,DROPOUT)
-# model.fit(x_train, y_train,epochs=1, batch_size=FILTERS)
-# y_prob = model.predict(x_dev,batch_size=FILTERS)
+# model.fit(x_train, y_train,epochs=1, batch_size=batch_size,class_weight=class_weight)
+# y_prob = model.predict(x_dev,batch_size=batch_size)
 # y_pred = y_prob.argmax(axis=-1) # Get the predicted class (not probabilites of each)
 # ypred = list(y_pred) # Turn array into list
 # y_true = make_classifications_list(y_dev) # Turn Matrix of targets into list
-# conf_matrix = confusion_matrix(y_true, y_pred)
-# print(conf_matrix)
 # print(classification_report(y_true, y_pred))
 # print(accuracy_score(y_true,y_pred))
 # scores = model.evaluate(x_dev,y_dev,verbose=0)
 # print("Accuracy: %.2f%%" % (scores[1]*100))
 
-
-
-
+# # One-off dev test - LSTM
+# model = create_rnn(embedding_weights,EMBEDDING_DIM,MAX_SEQUENCE_LENGTH,FILTERS,DROPOUT)
+# model.fit(x_train, y_train,epochs=1, batch_size=batch_size,class_weight=class_weight)
+# y_prob = model.predict(x_dev,batch_size=batch_size)
+# y_pred = y_prob.argmax(axis=-1) # Get the predicted class (not probabilites of each)
+# ypred = list(y_pred) # Turn array into list
+# y_true = make_classifications_list(y_dev) # Turn Matrix of targets into list
+# print(classification_report(y_true, y_pred))
+# print(accuracy_score(y_true,y_pred))
+# scores = model.evaluate(x_dev,y_dev,verbose=0)
+# print("Accuracy: %.2f%%" % (scores[1]*100))
