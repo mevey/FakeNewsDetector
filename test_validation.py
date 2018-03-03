@@ -112,11 +112,6 @@ def get_document_text_and_veracity():
             preds.append(row[1])
     return docs, preds
 
-# documents, predictions = get_document_text_and_veracity()
-
-# file = 'data/GoogleNews-vectors-negative300.bin'
-# embeddings = KeyedVectors.load_word2vec_format(file, binary=True)
-
 ########################################################################################################################
 # Define functions for processiong the logistic regression data
 ########################################################################################################################
@@ -221,39 +216,13 @@ def docs_to_matrix(documents,embeddings,method='avg'):
 # first, we split the data and evaluate a logistic regression on it 
 ########################################################################################################################
 
-TEST_SPLIT = 0.2
-VALIDATION_SPLIT = 0.2
-
-features = feature_matrix([
-    "number_of_words",
-    "number_of_unique_words",
-    "number_of_sentences",
-    "number_of_long_words",
-    "number_of_monosyllable_words",
-    "number_of_polsyllable_words",
-    "average_number_of_syllables",
-    "flesch_readability_ease",
-    "first_person_pronouns",
-    "second_person_pronouns",
-    "third_person_pronouns",
-    "conjunction_count",
-    "modal_verb_count",
-    "number_of_hedge_words",
-    "number_of_weasel_words",
-    "number_of_links",
-    "number_of_quotes",
-    "contains_author"
-])
-
-
-
 def run_logreg(documents,features,embeddings):
     """
     runs and evaluates logreg model
     Runs both embedding and tf-idf versions. 
     """
 
-    # fbeta = make_scorer(fbeta_score,beta=5.0) experimented with fbeta. Not in use. 
+    # fbeta = make_scorer(fbeta_score,beta=5.0)    NOTE: experimented with fbeta. Not in use. 
 
     # Version 1: Use embeddings and concatenate all features, then do train-test split. 
     articles_matrix = docs_to_matrix(documents,embeddings)
@@ -427,60 +396,6 @@ def make_classifications_list(binary_targets):
         y_true[i] = classification
     return y_true
 
-
-# # Final Model Test - CNN
-# model = create_cnn(embedding_weights,EMBEDDING_DIM,MAX_SEQUENCE_LENGTH,FILTERS,k,DROPOUT)
-# model.fit(x_train, y_train,epochs=1, batch_size=batch_size)
-# y_prob = model.predict(x_final_test,batch_size=batch_size)
-# y_pred = y_prob.argmax(axis=-1) # Get the predicted class (not probabilites of each)
-# ypred = list(y_pred) # Turn array into list
-# y_true = make_classifications_list(y_final_test) # Turn Matrix of targets into list
-# print(classification_report(y_true, y_pred))
-# print(accuracy_score(y_true,y_pred))
-# scores = model.evaluate(x_final_test,y_final_test,verbose=0)
-# print("Accuracy: %.2f%%" % (scores[1]*100))
-
-# # Final Model Test - LSTM
-# model = create_rnn(embedding_weights,EMBEDDING_DIM,MAX_SEQUENCE_LENGTH,FILTERS,DROPOUT)
-# model.fit(x_train, y_train,epochs=1, batch_size=batch_size)
-# y_prob = model.predict(x_final_test,batch_size=batch_size)
-# y_pred = y_prob.argmax(axis=-1) # Get the predicted class (not probabilites of each)
-# ypred = list(y_pred) # Turn array into list
-# y_true = make_classifications_list(y_final_test) # Turn Matrix of targets into list
-# print(classification_report(y_true, y_pred))
-# print(accuracy_score(y_true,y_pred))
-# scores = model.evaluate(x_final_test,y_final_test,verbose=0)
-# print("Accuracy: %.2f%%" % (scores[1]*100))
-
-# One-off dev test - CNN
-# model = create_cnn(embedding_weights,EMBEDDING_DIM,MAX_SEQUENCE_LENGTH,FILTERS,k,DROPOUT)
-# model.fit(x_train, y_train,epochs=1, batch_size=batch_size,class_weight=class_weight)
-# y_prob = model.predict(x_dev,batch_size=batch_size)
-# y_pred = y_prob.argmax(axis=-1) # Get the predicted class (not probabilites of each)
-# ypred = list(y_pred) # Turn array into list
-# y_true = make_classifications_list(y_dev) # Turn Matrix of targets into list
-# print(classification_report(y_true, y_pred))
-# print(accuracy_score(y_true,y_pred))
-# scores = model.evaluate(x_dev,y_dev,verbose=0)
-# print("Accuracy: %.2f%%" % (scores[1]*100))
-
-# One-off dev test - LSTM
-# model = create_rnn(embedding_weights,EMBEDDING_DIM,MAX_SEQUENCE_LENGTH,FILTERS,DROPOUT)
-# model.fit(x_train, y_train,epochs=1, batch_size=batch_size,class_weight=class_weight)
-# y_prob = model.predict(x_dev,batch_size=batch_size)
-# y_pred = y_prob.argmax(axis=-1) # Get the predicted class (not probabilites of each)
-# ypred = list(y_pred) # Turn array into list
-# y_true = make_classifications_list(y_dev) # Turn Matrix of targets into list
-# print(classification_report(y_true, y_pred))
-# print(accuracy_score(y_true,y_pred))
-# scores = model.evaluate(x_dev,y_dev,verbose=0)
-# print("Accuracy: %.2f%%" % (scores[1]*100))
-
-
-########################################################################################################################
-# Note - these are dev tests used in model tuning. Remove? 
-########################################################################################################################
-
 if __name__ == '__main__':
     possibilities = ['mixture of true and false', 'mostly false', 'no factual content', 'mostly true']
     # possibilities = ['mixture of true and false', 'mostly false', 'mostly true'] # For partisan-only
@@ -551,3 +466,31 @@ if __name__ == '__main__':
     print(accuracy_score(y_true,y_pred))
     scores = model.evaluate(x_data['test'],y_data['test'],verbose=0)
     print("Accuracy: %.2f%%" % (scores[1]*100))
+
+
+
+## NOTE: These are one-off dev tests for tuning model design and hyperparameters
+
+# One-off dev test - CNN
+# model = create_cnn(embedding_weights,EMBEDDING_DIM,MAX_SEQUENCE_LENGTH,FILTERS,k,DROPOUT)
+# model.fit(x_data['train'], y_data['train'],epochs=1, batch_size=batch_size,class_weight=class_weight)
+# y_prob = model.predict(x_data['dev'],batch_size=batch_size)
+# y_pred = y_prob.argmax(axis=-1) # Get the predicted class (not probabilites of each)
+# ypred = list(y_pred) # Turn array into list
+# y_true = make_classifications_list(y_data['dev']) # Turn Matrix of targets into list
+# print(classification_report(y_true, y_pred))
+# print(accuracy_score(y_true,y_pred))
+# scores = model.evaluate(x_data['dev'],y_data['dev'],verbose=0)
+# print("Accuracy: %.2f%%" % (scores[1]*100))
+
+# One-off dev test - LSTM
+# model = create_rnn(embedding_weights,EMBEDDING_DIM,MAX_SEQUENCE_LENGTH,FILTERS,DROPOUT)
+# model.fit(x_data['train'], y_data['train'],epochs=1, batch_size=batch_size,class_weight=class_weight)
+# y_prob = model.predict(x_data['dev'],batch_size=batch_size)
+# y_pred = y_prob.argmax(axis=-1) # Get the predicted class (not probabilites of each)
+# ypred = list(y_pred) # Turn array into list
+# y_true = make_classifications_list(y_data['dev']) # Turn Matrix of targets into list
+# print(classification_report(y_true, y_pred))
+# print(accuracy_score(y_true,y_pred))
+# scores = model.evaluate(x_data['dev'],y_data['dev'],verbose=0)
+# print("Accuracy: %.2f%%" % (scores[1]*100))
