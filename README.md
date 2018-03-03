@@ -23,7 +23,8 @@ python feature_generator.py
 * Contains functions for making features across the dataset (which is a collection XML files)
 
 ## model.ipynb
-* Notebook containing a quick runthrough of our model, including some notes on how we implemented the various steps. 
+* Notebook containing a quick runthrough of our model, including some notes on how we implemented the various steps.
+* Mostly used for testing purposes, this is not meant to be a full running version of the model. See test_validation.py for full model 
 
 ## parser.py
 * Contains functions for reading through the XML data, writing in feature values and getting statistics on feature values

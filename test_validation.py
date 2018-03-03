@@ -1,5 +1,5 @@
 import numpy as np
-np.random.seed(1337) # Fix a random seed to make (sorta) reproducible results
+np.random.seed(1337) # Fix a random seed to make reproducible results
 
 #from parser import *
 
@@ -28,9 +28,12 @@ from keras.wrappers.scikit_learn import KerasClassifier # Wrapper to use Keras m
 ########################################################################################################################
 possibilities = ['mixture of true and false', 'mostly false', 'no factual content', 'mostly true']
 # possibilities = ['mixture of true and false', 'mostly false', 'mostly true']
-def read_files(cols, orientation="all"):
+def read_files(cols, orientation='all',data='all'):
     """
-    For each xml file return a matrix of values asked for
+    For each xml file, return a matrix of values requested
+    
+    orientation: Only read out data for specific political orientations ('mainstream','')
+    data: 'all' tests the full dataset, 'partisan' tests just the partisan articles (i.e. not mainstream/non-factual)
     """
     path = 'data/train/'
     for filename in os.listdir(path):
@@ -39,15 +42,19 @@ def read_files(cols, orientation="all"):
         xmlfile = os.path.join(path, filename)
         tree = ET.parse(xmlfile)
 
-# FOR TESTING WHOLE DATASET, use below:        
-        if not tree.find("mainText").text: continue
-        if orientation != "all" and tree.find("orientation").text != orientation:
-            continue
+# Testing whole dataset:        
+        if data == 'all':
+            if not tree.find("mainText").text: continue
+            if orientation != "all" and tree.find("orientation").text != orientation:
+                continue
         
-# COMMENT IN THE FOLLOWING two if statements to test the partisan-only dataset
-        # if not tree.find("mainText").text or tree.find("veracity").text == "no factual content": continue
-        # if orientation == "all" and tree.find("orientation").text == 'mainstream':
-        #     continue    
+# Testing only partisan dataset:
+        elif data == 'partisan':
+            if not tree.find("mainText").text or tree.find("veracity").text == "no factual content": continue
+            if orientation == "all" and tree.find("orientation").text == 'mainstream':
+                continue    
+
+# For the dataset, yield the text, veracity label from XML files
         if cols == "mainText":
             if tree.find("mainText").text:
                 yield tree.find("mainText").text
@@ -71,12 +78,14 @@ def read_files(cols, orientation="all"):
             yield data_row
 
 def feature_matrix(cols):
+    """Returns a matrix of the feature values for the files (note feature values have been written into XML)"""
     data = []
     for row in read_files(cols):
         data.append(np.array(row))
     return np.array(data)
 
 def get_document_text():
+    """Return list of article maintext - deprecated"""
     data = []
     for row in read_files("mainText"):
         if not row:
@@ -86,12 +95,14 @@ def get_document_text():
     return data
 
 def get_veracity():
+    """Return list of veracity labels - deprecated"""
     data = []
     for row in read_files("veracity"):
         data.append(row)
     return data
 
 def get_document_text_and_veracity():
+    # Return lists of document maintext and veracity labels
     docs, preds = [], []
     for row in read_files("both"):
         if not row[0]:
@@ -101,14 +112,15 @@ def get_document_text_and_veracity():
             preds.append(row[1])
     return docs, preds
 
-documents, predictions = get_document_text_and_veracity()
+# documents, predictions = get_document_text_and_veracity()
 
-file = 'data/GoogleNews-vectors-negative300.bin'
-embeddings = KeyedVectors.load_word2vec_format(file, binary=True)
+# file = 'data/GoogleNews-vectors-negative300.bin'
+# embeddings = KeyedVectors.load_word2vec_format(file, binary=True)
 
 ########################################################################################################################
 # Define functions for processiong the logistic regression data
 ########################################################################################################################
+
 
 def avg_docvec(docText,embeddings):
     """
@@ -126,6 +138,55 @@ def avg_docvec(docText,embeddings):
         except: # Ignore tokens that aren't in the Google News embeddings
             continue
     np.divide(docVec,denominator,out=docVec) 
+    return docVec
+
+def max_docvec(docText,embeddings):
+    """
+    Converts the text of a document (input as a string) to word embeddings, then takes the elementwise
+    max of the embeddings to return a single vector of the maximum elements.
+    """
+    docVec = 0
+    tokens = word_tokenize(docText) # Creates a list of word tokens (e.g. "Test words" -> ['Test', 'words'])
+    startIndex = 0
+    for i in range(len(tokens)): # Initialize the doc vec as the first token that is in the embeddings
+        try:
+            v = embeddings[tokens[i]]
+            docVec = v
+            startIndex = i
+            break
+        except:
+            continue
+    
+    for token in tokens[startIndex:]:
+        try:
+            v = embeddings[token]
+            np.max(docVec,v,out=docVec)
+        except: # Ignore tokens that aren't in the Google News embeddings
+            continue
+    return docVec
+
+def min_docvec(docText,embeddings):
+    """
+    Converts the text of a document (input as a string) to word embeddings, then takes the elementwise
+    min of the embeddings to return a single vector of the minimum elements.
+    """
+    docVec = 0
+    tokens = word_tokenize(docText) # Creates a list of word tokens (e.g. "Test words" -> ['Test', 'words'])
+    startIndex = 0
+    for i in range(len(tokens)): # Initialize the doc vec as the first token that is in the embeddings
+        try:
+            v = embeddings[tokens[i]]
+            docVec = v
+            startIndex = i
+            break
+        except:
+            continue
+    for token in tokens[startIndex:]: # Loop over words in the article, starting at first valid word
+        try:
+            v = embeddings[token]
+            np.min(docVec,v,out=docVec) # Only keep min elements
+        except: # Ignore tokens that aren't in the Google News embeddings
+            continue
     return docVec
 
 def docs_to_matrix(documents,embeddings,method='avg'):
@@ -184,91 +245,92 @@ features = feature_matrix([
     "contains_author"
 ])
 
-fbeta = make_scorer(fbeta_score,beta=5.0)
 
-# Version 1: Use embeddings and concatenate all features, then do train-test split. 
-articles_matrix = docs_to_matrix(documents,embeddings)
-articles_matrix = np.concatenate((articles_matrix,features),axis=1)
-x_training_set, x_final_test, y_training_set, y_final_test = train_test_split(articles_matrix, predictions, test_size=TEST_SPLIT, random_state=25) 
 
-# Final Model test of the Logreg embeddings
-print("TEST RESULTS OF THE LOGREG WITH EMBEDDINGS")
-logreg = LogisticRegressionCV(penalty='l2', scoring='f1',Cs=[.00001,.0001,.001,.01,.1,.2,.5,.8,1,2,5,10,100,1000])
-logreg.fit(x_training_set,y_training_set)
-y_pred = logreg.predict(x_final_test)
-print(classification_report(y_final_test, y_pred))
-print(accuracy_score(y_final_test,y_pred))
+def run_logreg(documents,features,embeddings):
+    """
+    runs and evaluates logreg model
+    Runs both embedding and tf-idf versions. 
+    """
 
-# Version 2: fit using the tf-idf features and all other features
-sklearn_tfidf = TfidfVectorizer(norm='l2',min_df=0, use_idf=True, smooth_idf=False, sublinear_tf=True, tokenizer=word_tokenize)
-articles_matrix = sklearn_tfidf.fit_transform(documents)
-articles_matrix = np.concatenate((articles_matrix.toarray(),features),axis=1)
-x_training_set, x_final_test, y_training_set, y_final_test = train_test_split(articles_matrix, predictions, test_size=TEST_SPLIT, random_state=25) 
+    # fbeta = make_scorer(fbeta_score,beta=5.0) experimented with fbeta. Not in use. 
 
-# Final Model test of the Logreg tf-idf
-print("TEST RESULTS OF THE LOGREG WITH TF-IDF")
-logreg = LogisticRegressionCV(penalty='l2', scoring="f1",Cs=[.00001,.0001,.001,.01,.1,.2,.5,.8,1,2,5,10,100,1000])
-logreg.fit(x_training_set,y_training_set)
-y_pred = logreg.predict(x_final_test)
-print(classification_report(y_final_test, y_pred))
-print(accuracy_score(y_final_test,y_pred))
+    # Version 1: Use embeddings and concatenate all features, then do train-test split. 
+    articles_matrix = docs_to_matrix(documents,embeddings)
+    articles_matrix = np.concatenate((articles_matrix,features),axis=1)
+    x_training_set, x_final_test, y_training_set, y_final_test = train_test_split(articles_matrix, predictions, test_size=TEST_SPLIT, random_state=25) 
+
+    # Final Model test of the Logreg embeddings
+    print("TEST RESULTS OF THE LOGREG WITH EMBEDDINGS")
+    logreg = LogisticRegressionCV(penalty='l2', scoring='f1',Cs=[.00001,.0001,.001,.01,.1,.2,.5,.8,1,2,5,10,100,1000])
+    logreg.fit(x_training_set,y_training_set)
+    y_pred = logreg.predict(x_final_test)
+    print(classification_report(y_final_test, y_pred))
+    print(accuracy_score(y_final_test,y_pred))
+
+    # Version 2: fit using the tf-idf features and all other features
+    sklearn_tfidf = TfidfVectorizer(norm='l2',min_df=0, use_idf=True, smooth_idf=False, sublinear_tf=True, tokenizer=word_tokenize)
+    articles_matrix = sklearn_tfidf.fit_transform(documents)
+    articles_matrix = np.concatenate((articles_matrix.toarray(),features),axis=1)
+    x_training_set, x_final_test, y_training_set, y_final_test = train_test_split(articles_matrix, predictions, test_size=TEST_SPLIT, random_state=25) 
+
+    # Final Model test of the Logreg tf-idf
+    print("TEST RESULTS OF THE LOGREG WITH TF-IDF")
+    logreg = LogisticRegressionCV(penalty='l2', scoring="f1",Cs=[.00001,.0001,.001,.01,.1,.2,.5,.8,1,2,5,10,100,1000])
+    logreg.fit(x_training_set,y_training_set)
+    y_pred = logreg.predict(x_final_test)
+    print(classification_report(y_final_test, y_pred))
+    print(accuracy_score(y_final_test,y_pred))
 
 
 ########################################################################################################################
 # Create the CNN
 ########################################################################################################################
-# Define hyperparameters
-# 700, .2, .2, 300, .5, 300, 5
-MAX_SEQUENCE_LENGTH = 700 # Determined experimentally so far. 
-EMBEDDING_DIM = 300 # Google News embeddings are 300 dimensional
-DROPOUT = 0.5 # Dropout strength 
-FILTERS = 300 # Number of filters in the convolutional layers
-k = 5 # Sliding k window size for convolutional layers
-class_weight = {0:3,1:3,2:1,3:1}
-batch_size = 300
-# possibilities = ['mixture of true and false', 'mostly false', 'no factual content', 'mostly true']
 
+def prep_data(documents,predictions,embeddings,maxlen):
+    """Preps output data for the neural models"""
 
+    # Prepare tokenizer
+    t = Tokenizer()
+    t.fit_on_texts(documents)
+    vocab_size = len(t.word_index) + 1
 
-# Prepare tokenizer
-t = Tokenizer()
-t.fit_on_texts(documents)
-vocab_size = len(t.word_index) + 1
+    # integer encode the documents
+    encoded_docs = t.texts_to_sequences(documents)
 
-# integer encode the documents
-encoded_docs = t.texts_to_sequences(documents)
+    # pad our doc sequences to a max length of MAX_SEQUENCE_LENGTH words
+    data = pad_sequences(encoded_docs, maxlen=MAX_SEQUENCE_LENGTH, padding='post')
 
-# pad our doc sequences to a max length of MAX_SEQUENCE_LENGTH words
-data = pad_sequences(encoded_docs, maxlen=MAX_SEQUENCE_LENGTH, padding='post')
+    # Re-using the list of integer labels generated earlier, make a binary class matrix
+    labels = to_categorical(np.asarray(predictions))
 
-# Re-using the list of integer labels generated earlier, make a binary class matrix
-labels = to_categorical(np.asarray(predictions))
-# Split into train and test sets - I try 2 versions, one from Keras and one using sklearn functions
+    # Split the full dataset into data used for training and the final test stage
+    x_training_set, x_final_test, y_training_set, y_final_test = train_test_split(data, labels, test_size = TEST_SPLIT, random_state=25) 
 
-# Split the full dataset into data used for training and the final test stage
-x_training_set, x_final_test, y_training_set, y_final_test = train_test_split(data, labels, test_size = TEST_SPLIT, random_state=25) 
+    # Secondary split of training data into test and training
+    x_train, x_dev, y_train, y_dev = train_test_split(x_training_set, y_training_set, test_size = VALIDATION_SPLIT, random_state=17)
 
-# Secondary split of training data into test and training
-x_train, x_dev, y_train, y_dev = train_test_split(x_training_set, y_training_set, test_size = VALIDATION_SPLIT, random_state=17)
-
-
-# create a weight matrix for words in training docs
-
-embedding_weights = np.zeros((vocab_size, 300))
-for word, i in t.word_index.items():
-    embedding_vector = None
-    try:
-        embedding_vector = embeddings[word] # Get the vector for a given word
-    except:
+    # create a weight matrix for words in training docs
+    embedding_weights = np.zeros((vocab_size, 300))
+    for word, i in t.word_index.items():
         embedding_vector = None
-    if embedding_vector is not None:
-        embedding_weights[i] = embedding_vector
+        try:
+            embedding_vector = embeddings[word] # Get the google vector for a given word
+        except:
+            embedding_vector = None
+        if embedding_vector is not None:
+            embedding_weights[i] = embedding_vector
 
-# Create the embedding layer from the embedding matrix
-def create_cnn(embedding_weights=embedding_weights,embedding_dim=EMBEDDING_DIM,max_sequence_len=MAX_SEQUENCE_LENGTH,\
-	filters=FILTERS,k=k,dropout=DROPOUT):    
+    x_data = {'train':x_train,'dev':x_dev,'test':x_final_test}
+    y_data = {'train':y_train,'dev':y_dev,'test':y_final_test}
+
+    return x_data, y_data, embedding_weights
+
+
+
+def create_cnn(embedding_weights,embedding_dim,max_sequence_len,filters,k,dropout):    
     print("k= ",k," seq len= ",max_sequence_len," filters= ",filters," dropout= ",dropout)
-    embedding_layer = Embedding(vocab_size,
+    embedding_layer = Embedding(embedding_weights.shape[0], # This is the vocab size
                                 EMBEDDING_DIM,
                                 weights=[embedding_weights],
                                 input_length=MAX_SEQUENCE_LENGTH,
@@ -301,12 +363,11 @@ def create_cnn(embedding_weights=embedding_weights,embedding_dim=EMBEDDING_DIM,m
 # Bonus round - LSTM Model
 ########################################################################################################################
 
-def create_rnn(embedding_weights=embedding_weights,embedding_dim=EMBEDDING_DIM,max_sequence_len=MAX_SEQUENCE_LENGTH,\
-    filters=FILTERS,dropout=DROPOUT):
-    embedding_layer = Embedding(vocab_size,
-                                EMBEDDING_DIM,
+def create_rnn(embedding_weights,embedding_dim,max_sequence_len,filters,dropout):
+    embedding_layer = Embedding(embedding_weights.shape[0],
+                                embedding_dim,
                                 weights=[embedding_weights],
-                                input_length=MAX_SEQUENCE_LENGTH,
+                                input_length=max_sequence_len,
                                 trainable=False)
 
     rnn = Sequential()
@@ -323,15 +384,18 @@ def create_rnn(embedding_weights=embedding_weights,embedding_dim=EMBEDDING_DIM,m
 # Run cross validation over the hyperparameters
 ########################################################################################################################
 
-filters_dev = [100,200,300]
-sequence_len_dev = [400,600,700,800]
-dropout_dev = [0.01,0.1,0.5,0.9,1.0]
-k_dev = [3,4,5,6]
-epochs_dev = [1,2,3] # No change across epoch values
-batch_size_dev = [16,32,64,128,256,300]
+# TSB - Commenting this out now. Takes forever to run, should use random search next time
+
+
+# filters_dev = [100,200,300]
+# sequence_len_dev = [400,600,700,800]
+# dropout_dev = [0.01,0.1,0.5,0.9,1.0]
+# k_dev = [3,4,5,6]
+# epochs_dev = [1,2,3] # No change across epoch values
+# batch_size_dev = [16,32,64,128,256,300]
 # param_grid = dict(max_sequence_len=sequence_len_dev,filters=filters_dev,k=k_dev,dropout=dropout_dev) 
 # param_grid = dict(epochs=epochs_dev,batch_size=batch_size_dev)
-param_grid = dict(max_sequence_len=[500,600,700],k=[4,5,6],dropout=[0.5,0.9]) 
+# param_grid = dict(max_sequence_len=[500,600,700],k=[4,5,6],dropout=[0.5,0.9]) 
 
 # # Cross-validation using sklearn's gridsearchCV (WARNING: very costly call)
 # cnn = KerasClassifier(build_fn=create_cnn,embedding_weights=embedding_weights)
@@ -364,53 +428,126 @@ def make_classifications_list(binary_targets):
     return y_true
 
 
+# # Final Model Test - CNN
+# model = create_cnn(embedding_weights,EMBEDDING_DIM,MAX_SEQUENCE_LENGTH,FILTERS,k,DROPOUT)
+# model.fit(x_train, y_train,epochs=1, batch_size=batch_size)
+# y_prob = model.predict(x_final_test,batch_size=batch_size)
+# y_pred = y_prob.argmax(axis=-1) # Get the predicted class (not probabilites of each)
+# ypred = list(y_pred) # Turn array into list
+# y_true = make_classifications_list(y_final_test) # Turn Matrix of targets into list
+# print(classification_report(y_true, y_pred))
+# print(accuracy_score(y_true,y_pred))
+# scores = model.evaluate(x_final_test,y_final_test,verbose=0)
+# print("Accuracy: %.2f%%" % (scores[1]*100))
 
-# Final Model Test - CNN
-model = create_cnn(embedding_weights,EMBEDDING_DIM,MAX_SEQUENCE_LENGTH,FILTERS,k,DROPOUT)
-model.fit(x_train, y_train,epochs=1, batch_size=batch_size)
-y_prob = model.predict(x_final_test,batch_size=batch_size)
-y_pred = y_prob.argmax(axis=-1) # Get the predicted class (not probabilites of each)
-ypred = list(y_pred) # Turn array into list
-y_true = make_classifications_list(y_final_test) # Turn Matrix of targets into list
-print(classification_report(y_true, y_pred))
-print(accuracy_score(y_true,y_pred))
-scores = model.evaluate(x_final_test,y_final_test,verbose=0)
-print("Accuracy: %.2f%%" % (scores[1]*100))
-
-# Final Model Test - LSTM
-model = create_rnn(embedding_weights,EMBEDDING_DIM,MAX_SEQUENCE_LENGTH,FILTERS,DROPOUT)
-model.fit(x_train, y_train,epochs=1, batch_size=batch_size)
-y_prob = model.predict(x_final_test,batch_size=batch_size)
-y_pred = y_prob.argmax(axis=-1) # Get the predicted class (not probabilites of each)
-ypred = list(y_pred) # Turn array into list
-y_true = make_classifications_list(y_final_test) # Turn Matrix of targets into list
-print(classification_report(y_true, y_pred))
-print(accuracy_score(y_true,y_pred))
-scores = model.evaluate(x_final_test,y_final_test,verbose=0)
-print("Accuracy: %.2f%%" % (scores[1]*100))
-
-
+# # Final Model Test - LSTM
+# model = create_rnn(embedding_weights,EMBEDDING_DIM,MAX_SEQUENCE_LENGTH,FILTERS,DROPOUT)
+# model.fit(x_train, y_train,epochs=1, batch_size=batch_size)
+# y_prob = model.predict(x_final_test,batch_size=batch_size)
+# y_pred = y_prob.argmax(axis=-1) # Get the predicted class (not probabilites of each)
+# ypred = list(y_pred) # Turn array into list
+# y_true = make_classifications_list(y_final_test) # Turn Matrix of targets into list
+# print(classification_report(y_true, y_pred))
+# print(accuracy_score(y_true,y_pred))
+# scores = model.evaluate(x_final_test,y_final_test,verbose=0)
+# print("Accuracy: %.2f%%" % (scores[1]*100))
 
 # One-off dev test - CNN
-model = create_cnn(embedding_weights,EMBEDDING_DIM,MAX_SEQUENCE_LENGTH,FILTERS,k,DROPOUT)
-model.fit(x_train, y_train,epochs=1, batch_size=batch_size,class_weight=class_weight)
-y_prob = model.predict(x_dev,batch_size=batch_size)
-y_pred = y_prob.argmax(axis=-1) # Get the predicted class (not probabilites of each)
-ypred = list(y_pred) # Turn array into list
-y_true = make_classifications_list(y_dev) # Turn Matrix of targets into list
-print(classification_report(y_true, y_pred))
-print(accuracy_score(y_true,y_pred))
-scores = model.evaluate(x_dev,y_dev,verbose=0)
-print("Accuracy: %.2f%%" % (scores[1]*100))
+# model = create_cnn(embedding_weights,EMBEDDING_DIM,MAX_SEQUENCE_LENGTH,FILTERS,k,DROPOUT)
+# model.fit(x_train, y_train,epochs=1, batch_size=batch_size,class_weight=class_weight)
+# y_prob = model.predict(x_dev,batch_size=batch_size)
+# y_pred = y_prob.argmax(axis=-1) # Get the predicted class (not probabilites of each)
+# ypred = list(y_pred) # Turn array into list
+# y_true = make_classifications_list(y_dev) # Turn Matrix of targets into list
+# print(classification_report(y_true, y_pred))
+# print(accuracy_score(y_true,y_pred))
+# scores = model.evaluate(x_dev,y_dev,verbose=0)
+# print("Accuracy: %.2f%%" % (scores[1]*100))
 
 # One-off dev test - LSTM
-model = create_rnn(embedding_weights,EMBEDDING_DIM,MAX_SEQUENCE_LENGTH,FILTERS,DROPOUT)
-model.fit(x_train, y_train,epochs=1, batch_size=batch_size,class_weight=class_weight)
-y_prob = model.predict(x_dev,batch_size=batch_size)
-y_pred = y_prob.argmax(axis=-1) # Get the predicted class (not probabilites of each)
-ypred = list(y_pred) # Turn array into list
-y_true = make_classifications_list(y_dev) # Turn Matrix of targets into list
-print(classification_report(y_true, y_pred))
-print(accuracy_score(y_true,y_pred))
-scores = model.evaluate(x_dev,y_dev,verbose=0)
-print("Accuracy: %.2f%%" % (scores[1]*100))
+# model = create_rnn(embedding_weights,EMBEDDING_DIM,MAX_SEQUENCE_LENGTH,FILTERS,DROPOUT)
+# model.fit(x_train, y_train,epochs=1, batch_size=batch_size,class_weight=class_weight)
+# y_prob = model.predict(x_dev,batch_size=batch_size)
+# y_pred = y_prob.argmax(axis=-1) # Get the predicted class (not probabilites of each)
+# ypred = list(y_pred) # Turn array into list
+# y_true = make_classifications_list(y_dev) # Turn Matrix of targets into list
+# print(classification_report(y_true, y_pred))
+# print(accuracy_score(y_true,y_pred))
+# scores = model.evaluate(x_dev,y_dev,verbose=0)
+# print("Accuracy: %.2f%%" % (scores[1]*100))
+
+
+########################################################################################################################
+# Note - these are dev tests used in model tuning. Remove? 
+########################################################################################################################
+
+if __name__ == '__main__':
+    possibilities = ['mixture of true and false', 'mostly false', 'no factual content', 'mostly true']
+    # possibilities = ['mixture of true and false', 'mostly false', 'mostly true'] # For partisan-only
+
+    # Load in google embeddings and the document text/labels
+    documents, predictions = get_document_text_and_veracity()
+    file = 'data/GoogleNews-vectors-negative300.bin'
+    embeddings = KeyedVectors.load_word2vec_format(file, binary=True)
+
+    # Create a matrix of all the feature values for each article
+    features = feature_matrix([
+        "number_of_words",
+        "number_of_unique_words",
+        "number_of_sentences",
+        "number_of_long_words",
+        "number_of_monosyllable_words",
+        "number_of_polsyllable_words",
+        "average_number_of_syllables",
+        "flesch_readability_ease",
+        "first_person_pronouns",
+        "second_person_pronouns",
+        "third_person_pronouns",
+        "conjunction_count",
+        "modal_verb_count",
+        "number_of_hedge_words",
+        "number_of_weasel_words",
+        "number_of_links",
+        "number_of_quotes",
+        "contains_author"
+    ])
+
+    TEST_SPLIT = 0.2
+    VALIDATION_SPLIT = 0.2
+    MAX_SEQUENCE_LENGTH = 700 # Determined experimentally so far. 
+    EMBEDDING_DIM = 300 # Google News embeddings are 300 dimensional
+    DROPOUT = 0.5 # Dropout strength 
+    FILTERS = 300 # Number of filters in the convolutional layers
+    k = 5 # Sliding k window size for convolutional layers
+    class_weight = {0:3,1:3,2:1,3:1} # Class weighting attempt to deal with imbalance
+    batch_size = 300
+
+    # First execute logistic regression
+    run_logreg(documents,features,embeddings)
+
+    # Prepare train/test data and embedding weights for neural models
+    x_data, y_data, embedding_weights = prep_data(documents,predictions,embeddings,MAX_SEQUENCE_LENGTH)
+
+    # Final Model Test - CNN
+    model = create_cnn(embedding_weights,EMBEDDING_DIM,MAX_SEQUENCE_LENGTH,FILTERS,k,DROPOUT)
+    model.fit(x_data['train'], y_data['train'],epochs=1, batch_size=batch_size)
+    y_prob = model.predict(x_data['test'],batch_size=batch_size)
+    y_pred = y_prob.argmax(axis=-1) # Get the predicted class (not probabilites of each)
+    ypred = list(y_pred) # Turn array into list
+    y_true = make_classifications_list(y_data['test']) # Turn Matrix of targets into list
+    print(classification_report(y_true, y_pred))
+    print(accuracy_score(y_true,y_pred))
+    scores = model.evaluate(x_data['test'],y_data['test'],verbose=0)
+    print("Accuracy: %.2f%%" % (scores[1]*100))
+
+    # Final Model Test - LSTM
+    model = create_rnn(embedding_weights,EMBEDDING_DIM,MAX_SEQUENCE_LENGTH,FILTERS,DROPOUT)
+    model.fit(x_data['train'], y_data['train'],epochs=1, batch_size=batch_size)
+    y_prob = model.predict(x_data['test'],batch_size=batch_size)
+    y_pred = y_prob.argmax(axis=-1) # Get the predicted class (not probabilites of each)
+    ypred = list(y_pred) # Turn array into list
+    y_true = make_classifications_list(y_data['test']) # Turn Matrix of targets into list
+    print(classification_report(y_true, y_pred))
+    print(accuracy_score(y_true,y_pred))
+    scores = model.evaluate(x_data['test'],y_data['test'],verbose=0)
+    print("Accuracy: %.2f%%" % (scores[1]*100))
